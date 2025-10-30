@@ -1,4 +1,3 @@
-// src/app/profile/page.js
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,22 +6,39 @@ import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
+// --- Loading Skeleton (Optional, but nice) ---
+// This is a simple pulse for the content area while profileData loads
+const ProfileSkeleton = () => (
+  <div className="max-w-2xl mx-auto bg-slate-800 shadow-lg rounded-lg overflow-hidden p-8 animate-pulse">
+    <div className="h-8 w-1/3 bg-slate-700 rounded-md mb-6"></div>
+    <div className="flex items-center space-x-6 mb-8">
+      <div className="w-24 h-24 rounded-full bg-slate-700 shadow-md"></div>
+      <div>
+        <div className="h-7 w-48 bg-slate-700 rounded-md mb-2"></div>
+        <div className="h-5 w-64 bg-slate-700 rounded-md"></div>
+      </div>
+    </div>
+    <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
+      <div className="h-6 w-1/2 bg-slate-700 rounded-md mb-2"></div>
+      <div className="h-4 w-full bg-slate-700 rounded-md mb-4"></div>
+      <div className="h-4 w-3/4 bg-slate-700 rounded-md mb-6"></div>
+      <div className="h-16 w-full bg-slate-700 p-4 rounded-md"></div>
+    </div>
+  </div>
+);
+
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   
-  // This state will hold data from Firestore (including the Voter ID)
   const [profileData, setProfileData] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // 1. Check auth state
     if (!loading && !user) {
-      // If not logged in, redirect to auth page
       router.push('/auth');
     }
 
-    // 2. If logged in, fetch profile data from Firestore
     if (user) {
       const fetchProfile = async () => {
         try {
@@ -47,8 +63,8 @@ export default function ProfilePage() {
   // Show loading state
   if (loading || (user && !profileData && !error)) {
     return (
-      <div className="text-center p-10">
-        <h1 className="text-2xl font-semibold">Loading your profile...</h1>
+      <div className="container mx-auto px-4 sm:px-6 py-8">
+        <ProfileSkeleton />
       </div>
     );
   }
@@ -56,9 +72,11 @@ export default function ProfilePage() {
   // Handle errors
   if (error) {
     return (
-      <div className="text-center p-10 bg-red-100 border border-red-400 text-red-700 rounded-md">
-        <h1 className="text-2xl font-semibold">Error</h1>
-        <p>{error}</p>
+      <div className="container mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-2xl mx-auto text-center p-10 bg-red-900/50 border border-red-700 text-red-300 rounded-md">
+          <h1 className="text-2xl font-semibold">Error</h1>
+          <p>{error}</p>
+        </div>
       </div>
     );
   }
@@ -66,39 +84,51 @@ export default function ProfilePage() {
   // Display profile
   if (profileData) {
     return (
-      <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Your Profile</h1>
-        
-        <div className="flex items-center space-x-6 mb-8">
-          {profileData.photoURL && (
-            <img 
-              src={profileData.photoURL} 
-              alt="Profile" 
-              className="w-24 h-24 rounded-full shadow-md"
-            />
-          )}
-          <div>
-            <h2 className="text-2xl font-semibold">{profileData.name}</h2>
-            <p className="text-gray-600">{profileData.email}</p>
+      // Add the container here (that was removed from layout.js)
+      <div className="container mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-2xl mx-auto bg-slate-800 shadow-lg rounded-lg overflow-hidden p-8">
+          <h1 className="text-3xl font-bold text-cyan-100 mb-6">Your Profile</h1>
+          
+          <div className="flex items-center space-x-6 mb-8">
+            {profileData.photoURL ? (
+              <img 
+                src={profileData.photoURL} 
+                alt="Profile" 
+                className="w-24 h-24 rounded-full shadow-md object-cover bg-slate-700"
+                onError={(e) => e.target.style.display = 'none'} // Hide if image fails
+              />
+            ) : (
+              // Fallback icon if no photoURL
+              <div className="w-24 h-24 rounded-full shadow-md bg-slate-700 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-slate-500">
+                  <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+            <div>
+              <h2 className="text-2xl font-semibold text-white">{profileData.name}</h2>
+              <p className="text-blue-300">{profileData.email}</p>
+            </div>
           </div>
-        </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-800 mb-2">
-            Your Unique Voter ID
-          </h3>
-          <p className="text-gray-700 mb-4">
-            This is your secret ID. You will need it to cast your vote.
-            Do not share it with anyone.
-          </p>
-          <p className="text-4xl font-mono font-bold text-center bg-gray-100 p-4 rounded-md text-blue-900 tracking-widest">
-            {profileData.voterId}
-          </p>
+          {/* VOTER ID BOX - Styled with theme's "amber" accent */}
+          <div className="bg-slate-900 border-2 border-amber-400/50 rounded-lg p-6 shadow-inner">
+            <h3 className="text-lg font-semibold text-amber-300 mb-2">
+              Your Unique Voter ID
+            </h3>
+            <p className="text-slate-300 mb-4">
+              This is your secret ID. You will need it to cast your vote.
+              Do not share it with anyone.
+            </p>
+            <p className="text-4xl font-mono font-bold text-center bg-black/30 p-4 rounded-md text-amber-300 tracking-widest break-all">
+              {profileData.voterId}
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Fallback for cases where user is null but loading is false
+  // Fallback
   return null;
 }
